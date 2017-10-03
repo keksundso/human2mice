@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 
 
-def fourieMask(img, windowSize):
+def fourieMask(img):
 
 
     dft = cv2.dft(np.float32(img),flags = cv2.DFT_COMPLEX_OUTPUT) # macht die fourie transformatio
@@ -45,6 +45,13 @@ def fourieMask(img, windowSize):
 
     mask = np.zeros((rows,cols,2),np.uint8) 
 
+    for index, value in enumerate(magnitude_spectrum[:,magnitude_spectrum.shape[1]/2]):
+        if value == sorted(magnitude_spectrum[:,magnitude_spectrum.shape[1]/2])[-2]:
+            windowSize = abs(crow-index)
+
+            
+        
+
     mask[crow-windowSize:crow+windowSize, ccol-windowSize:ccol+windowSize] = 1
 
     # apply mask and inverse DFT
@@ -63,29 +70,42 @@ def fourieMask(img, windowSize):
     magnitude_spectrum_masked = 20*np.log(cv2.magnitude(dft_shift_back[:,:,0],dft_shift_back[:,:,1])+1)
     ###
 
+    #print mask[:,:,1]
 
 
-    return [img, img_back, magnitude_spectrum, magnitude_spectrum_masked]
+    return [img, img_back, magnitude_spectrum, magnitude_spectrum_masked, mask[:,:,1]]
 
-def give_plot(fourieReturn):
-    plt.subplot(221),plt.imshow(fourieReturn[0], cmap = 'gray')
-    plt.title('Input Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(222),plt.imshow(fourieReturn[2], cmap = 'gray')
-    plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
-    plt.subplot(224),plt.imshow(fourieReturn[3], cmap = 'gray')
-    plt.title('Filtered Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
-    plt.subplot(223),plt.imshow(fourieReturn[1], cmap = 'gray')
-    plt.title('MouseView'), plt.xticks([]), plt.yticks([])
+def give_plot(fourieReturn, index):
+    print len(fourieReturn)
+    if index == 0:
+        plt.subplot(334),plt.imshow(fourieReturn[0], cmap = 'gray')
+        plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(335),plt.imshow(fourieReturn[2], cmap = 'gray')
+        plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+        plt.subplot(338),plt.imshow(fourieReturn[3], cmap = 'gray')
+        plt.title('Filtered Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+        plt.subplot(337),plt.imshow(fourieReturn[1], cmap = 'gray')
+        plt.title('MouseView'), plt.xticks([]), plt.yticks([])
+
+    if index == 1:
+        plt.subplot(331),plt.imshow(fourieReturn[0], cmap = 'gray')
+        plt.title('Sine Wave'), plt.xticks([]), plt.yticks([])
+        plt.subplot(332),plt.imshow(fourieReturn[2], cmap = 'gray')
+        plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+        plt.subplot(333),plt.imshow(fourieReturn[4], cmap = 'gray')
+        plt.title('Mask'), plt.xticks([]), plt.yticks([])
+
+
 
 def rad2deg(x):
     return x * np.pi / 180.
 
-def give_sinImg(img):
+def give_sinImg(img,nrOfCycles):
     img = np.copy(img)
 
     OldMax = img.shape[0]
     OldMin = 0
-    #NewMax = 3600
+    NewMax = 360*nrOfCycles+90
     NewMin = 0
 
     OldRange = (OldMax - OldMin)  
@@ -111,7 +131,7 @@ img = img[0:np.amin(img.shape), 0:np.amin(img.shape)]
 
 
 windowSize = 8
-NewMax = 3690
+
 
 """
 imgList = []
@@ -132,9 +152,15 @@ for index, img in enumerate(imgList):
     plt.title(NewMax), plt.xticks([]), plt.yticks([])
 
 """
-img = give_sinImg(np.empty(img.shape))
-fourieReturn  = fourieMask(img, windowSize)
-give_plot(fourieReturn)
+
+sinImg = give_sinImg(np.empty(img.shape),10)
+
+listOfFourieReturns =[]
+for whichImg in [img, sinImg]:
+    listOfFourieReturns.append(fourieMask(whichImg))
+
+for index,fourieReturn in enumerate(listOfFourieReturns):
+    give_plot(fourieReturn,index)
 plt.show()
 
 
