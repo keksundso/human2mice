@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 
 
-def fourieMask(img):
+def fourieMask(img,windowSize):
 
 
     dft = cv2.dft(np.float32(img),flags = cv2.DFT_COMPLEX_OUTPUT) # macht die fourie transformatio
@@ -16,7 +16,7 @@ def fourieMask(img):
     #only magnitute is das wsa man sich fuer gewaehnlich anschaut (andre is wohl trippy)
     magnitude_spectrum = 20*np.log(cv2.magnitude(dft_shift[:,:,0],dft_shift[:,:,1])+1)
 
-    print magnitude_spectrum.min(), " --- ", magnitude_spectrum.max()
+
     #print magnitude_spectrum
     OldMax = magnitude_spectrum.max()
     OldMin = magnitude_spectrum.min()
@@ -45,9 +45,14 @@ def fourieMask(img):
 
     mask = np.zeros((rows,cols,2),np.uint8) 
 
-    for index, value in enumerate(magnitude_spectrum[:,magnitude_spectrum.shape[1]/2]):
-        if value == sorted(magnitude_spectrum[:,magnitude_spectrum.shape[1]/2])[-2]:
-            windowSize = abs(crow-index)
+    if windowSize != None:
+        pass
+    else:
+        for index, value in enumerate(magnitude_spectrum[:,magnitude_spectrum.shape[1]/2]):
+            if value == sorted(magnitude_spectrum[:,magnitude_spectrum.shape[1]/2])[-2]:
+                windowSize = abs(crow-index)
+
+    #print windowSize
 
             
         
@@ -73,35 +78,40 @@ def fourieMask(img):
     #print mask[:,:,1]
 
 
-    return [img, img_back, magnitude_spectrum, magnitude_spectrum_masked, mask[:,:,1]]
+    return [[img, img_back, magnitude_spectrum, magnitude_spectrum_masked, mask[:,:,1]],windowSize]
 
 def give_plot(fourieReturn, index):
-    print len(fourieReturn)
-    if index == 0:
-        plt.subplot(334),plt.imshow(fourieReturn[0], cmap = 'gray')
+    if index == 1:
+        plt.subplot(331),plt.imshow(fourieReturn[0], cmap = 'gray')
         plt.title('Input Image'), plt.xticks([]), plt.yticks([])
-        plt.subplot(335),plt.imshow(fourieReturn[2], cmap = 'gray')
+        plt.subplot(332),plt.imshow(fourieReturn[2], cmap = 'gray')
         plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
         plt.subplot(338),plt.imshow(fourieReturn[3], cmap = 'gray')
-        plt.title('Filtered Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+        plt.title('Filtered Mag.Spec.'), plt.xticks([]), plt.yticks([])
         plt.subplot(337),plt.imshow(fourieReturn[1], cmap = 'gray')
         plt.title('MouseView'), plt.xticks([]), plt.yticks([])
 
-    if index == 1:
-        plt.subplot(331),plt.imshow(fourieReturn[0], cmap = 'gray')
+        plt.subplot(333),plt.imshow(fourieReturn[5], cmap = 'gray')
+        plt.title('Input With cont.'), plt.xticks([]), plt.yticks([])
+
+        plt.subplot(339),plt.imshow(fourieReturn[6], cmap = 'gray')
+        plt.title('MouseView cont.'), plt.xticks([]), plt.yticks([])
+
+
+    if index == 0:
+        plt.subplot(334),plt.imshow(fourieReturn[5], cmap = 'gray')
         plt.title('Sine Wave'), plt.xticks([]), plt.yticks([])
-        plt.subplot(332),plt.imshow(fourieReturn[2], cmap = 'gray')
+        plt.subplot(335),plt.imshow(fourieReturn[2], cmap = 'gray')
         plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
-        plt.subplot(333),plt.imshow(fourieReturn[4], cmap = 'gray')
+        plt.subplot(336),plt.imshow(fourieReturn[4], cmap = 'gray')
         plt.title('Mask'), plt.xticks([]), plt.yticks([])
-
-
 
 def rad2deg(x):
     return x * np.pi / 180.
 
 def give_sinImg(img,nrOfCycles):
     img = np.copy(img)
+    totalimg = np.copy(img)
 
     OldMax = img.shape[0]
     OldMin = 0
@@ -116,52 +126,83 @@ def give_sinImg(img,nrOfCycles):
         NewValue = (((zeile - OldMin) * NewRange) / OldRange) + NewMin
         wert = (np.sin(rad2deg(NewValue))+1)*(255.0/2.0)
         img[zeile][img.shape[1]/2] = wert
+
+    for zeile in range(totalimg.shape[1]):
+        NewValue = (((zeile - OldMin) * NewRange) / OldRange) + NewMin
+        wert = (np.sin(rad2deg(NewValue))+1)*(255.0/2.0)
+        totalimg[zeile][:] = wert
+    return [img, totalimg]
+
+def give_lowerContrast(img,contrastFactor):
+    img = np.copy(img)
+
+    mouseMin = int(255/(contrastFactor))-(int(255/(contrastFactor*2)))
+    mouseMax = int(255/(contrastFactor))+(int(255/(contrastFactor*2)))
+
+    def remap(value, OldMax,OldMin,NewMax,NewMin):
+        OldRange = (OldMax - OldMin)  
+        NewRange = (NewMax - NewMin)  
+        
+        value = int((((value - OldMin) * NewRange) / OldRange) + NewMin)
+        
+        return value
+
+    
+    OldMax = img.max()
+    OldMin =img.min()
+    for lineIndex, line in enumerate(img[:,0]):
+        for valueIndex, value in enumerate(img[lineIndex,:]):
+            img[lineIndex,valueIndex] = remap(value,OldMax,OldMin,255,0)
+    
+
+    OldMax = img.max()
+    OldMin =img.min()
+    for lineIndex, line in enumerate(img[:,0]):
+        for valueIndex, value in enumerate(img[lineIndex,:]):
+            img[lineIndex,valueIndex] = remap(value,OldMax,OldMin,mouseMax,mouseMin)
+    
+    
+    img[0,0] = 0
+    img[0,1] = 255
+    
+    
     return img
-
-
 
 
 imgPath ='05spat.png'
 imgPath ='passfoto.jpg'
 #imgPath ='Landschaftsbild.jpg'
 
+#Read Image and cut it square
 img = cv2.imread(imgPath,0)
 img = img[0:np.amin(img.shape), 0:np.amin(img.shape)] 
+print "Image is read and croped"
 
 
 
-windowSize = 8
-
-
-"""
-imgList = []
-shapeList = []
-for n in range(400,401):
-    img = give_sinImg(np.empty([n,n]))
-    img = img.astype(int)
-    fourieReturn  = fourieMask(img, windowSize)
-    fourieReturn[2] = fourieReturn[2].astype(int)
-    imgList.append(fourieReturn[2])
-    shapeList.append(n)
-
-for index, img in enumerate(imgList):
-
-    subplotNr = int("33"+str(index+1))
-    plt.subplot(1,1,index+1)
-    plt.imshow(img, cmap = 'gray')
-    plt.title(NewMax), plt.xticks([]), plt.yticks([])
-
-"""
-
-sinImg = give_sinImg(np.empty(img.shape),10)
+sinImgList = give_sinImg(np.empty(img.shape),100)
+sinImg = sinImgList[0]
+print "Sine Wave is created"
 
 listOfFourieReturns =[]
-for whichImg in [img, sinImg]:
-    listOfFourieReturns.append(fourieMask(whichImg))
+
+fourieReturnAll =fourieMask(sinImg,None)
+listOfFourieReturns.append(fourieReturnAll[0])
+listOfFourieReturns.append(fourieMask(img,fourieReturnAll[1])[0])
+print "Fourie is performed"
+
+listOfFourieReturns[1].append(give_lowerContrast(img,2))
+listOfFourieReturns[1].append(give_lowerContrast(listOfFourieReturns[1][1],2))
+listOfFourieReturns[0].append(sinImgList[1])
+print "Mouse contrast is performed"
 
 for index,fourieReturn in enumerate(listOfFourieReturns):
     give_plot(fourieReturn,index)
+
+ 
+plt.savefig('foo.png', dpi=800,figsize=200)   
 plt.show()
+
 
 
 
