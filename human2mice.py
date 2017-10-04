@@ -10,7 +10,7 @@ Arguments:
 Options:
   -h --help                 Show this 
   -c <int>  cycle count     Number sine cycles per image (Default is 10)
-  -o <str>  output name     Name of the output image (Default is <input>_analysis)
+  -o <str>  output name     Name of the output Folder (Default is <input>_analysis)
                             Output is saved in same folder as input image
 """
 
@@ -22,9 +22,10 @@ arguments = docopt(__doc__)
 
 import numpy as np
 import cv2
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import os
 import ntpath
+from PIL import Image
 
 arguments["FILE"] = os.path.abspath(arguments["FILE"])
 if arguments["-c"] == None:
@@ -32,9 +33,9 @@ if arguments["-c"] == None:
 else:
     arguments["-c"] = int(arguments["-c"])
 if arguments["-o"] == None:
-    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_analysis.png"
+    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_analysis"
 else:
-    arguments["-o"] =  str(arguments["-o"])+".png"
+    arguments["-o"] =  str(arguments["-o"])
 os.chdir(os.path.dirname(arguments["FILE"]))
 
 
@@ -142,6 +143,58 @@ def give_plot(fourieReturn, index):
         plt.subplot(336),plt.imshow(fourieReturn[4], cmap = 'gray')
         plt.title('Mask'), plt.xticks([]), plt.yticks([])
 
+def give_img(fourieReturn, index):
+
+
+    if index == 1:
+        n = 0
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')
+        im.save("InputImage.png")
+
+        n = 2
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('MagnitudeSpectrum.png')
+
+        n = 3
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('MaskedMagnitudeSpectrum.png')
+
+        n = 1
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('MouseViewWithoutContr.png')
+
+        n = 5
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('InputViewWithContr.png')
+
+        n = 6
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('MouseViewWithContr.png')
+
+
+    if index == 0:
+        n = 5
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('SineWave.png')
+
+        n = 2
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('SineWaveMagnitudeSpectrum.png')
+
+        n = 4
+        fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
+        im = Image.fromarray(fourieReturn[n]).convert('RGB')        
+        im.save('Mask.png')
+        
+
 def rad2deg(x):
     return x * np.pi / 180.
 
@@ -241,22 +294,35 @@ else:
 
 listOfFourieReturns[0].append(sinImgList[1])
 
+imgOrPlot = "plot"
 
-print "Image Creation of ",os.path.abspath(str(arguments["-o"]))
-for index,fourieReturn in enumerate(listOfFourieReturns):
-    give_plot(fourieReturn,index)
-
-
-plt.savefig(str(arguments["-o"]), dpi=300,figsize=150)   
-#plt.show()
-print "Finished !!!"
+if imgOrPlot == "plot":
+    from matplotlib import pyplot as plt
+    print "Image Creation of ",os.path.abspath(str(arguments["-o"]))
+    for index,fourieReturn in enumerate(listOfFourieReturns):
+        give_plot(fourieReturn,index)
 
 
+    plt.savefig(str(arguments["-o"]), dpi=300,figsize=150)   
+    #plt.show()
+else:
+    counter = 0
+    while counter < 100:
+        counter+= 1
+        try:
+            os.mkdir(str(arguments["-o"])+"_"+str(counter))
+            os.chdir(str(arguments["-o"])+"_"+str(counter))
+            break
+        except:
+            pass
+
+    for index,fourieReturn in enumerate(listOfFourieReturns):
+        give_img(fourieReturn,index)
 
 #img = np.ndarray(shape=(10,10), dtype=int)
 #0 is schwarz
 #255 is weiss
 
 
-
+print "Finished !!!"
 
