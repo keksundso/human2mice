@@ -201,7 +201,7 @@ def give_img(fourieReturn, index):
         im.save('Mask.png')
         
 
-def rad2deg(x):
+def deg2rad(x):
     return x * np.pi / 180.
 
 def give_sinImg(img,nrOfCycles):
@@ -219,12 +219,12 @@ def give_sinImg(img,nrOfCycles):
 
     for zeile in range(img.shape[1]):
         NewValue = (((zeile - OldMin) * NewRange) / OldRange) + NewMin
-        wert = (np.sin(rad2deg(NewValue))+1)*(255.0/2.0)
+        wert = (np.sin(deg2rad(NewValue))+1)*(255.0/2.0)
         img[zeile][img.shape[1]/2] = wert
 
     for zeile in range(totalimg.shape[1]):
         NewValue = (((zeile - OldMin) * NewRange) / OldRange) + NewMin
-        wert = (np.sin(rad2deg(NewValue))+1)*(255.0/2.0)
+        wert = (np.sin(deg2rad(NewValue))+1)*(255.0/2.0)
         totalimg[zeile][:] = wert
     return [img, totalimg]
 
