@@ -1,6 +1,42 @@
+# -*- coding: utf-8 -*-
+# Version: 171004
+#Author: Christoph Neu
+
+"""Usage: human2mice.exe (FILE) [-c int] [-o str]
+
+Arguments:
+  FILE                      Path to picture 
+  
+Options:
+  -h --help                 Show this 
+  -c <int>  cycle count     Number sine cycles per image (Default is 10)
+  -o <str>  output name     Name of the output image (Default is <input>_analysis)
+                            Output is saved in same folder as input image
+"""
+
+from docopt import docopt
+
+
+arguments = docopt(__doc__)
+
+
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
+import os
+import ntpath
+
+arguments["FILE"] = os.path.abspath(arguments["FILE"])
+if arguments["-c"] == None:
+    arguments["-c"] = 10
+else:
+    arguments["-c"] = int(arguments["-c"])
+if arguments["-o"] == None:
+    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_analysis.png"
+else:
+    arguments["-o"] =  str(arguments["-o"])+".png"
+os.chdir(os.path.dirname(arguments["FILE"]))
+
 
 
 
@@ -92,10 +128,10 @@ def give_plot(fourieReturn, index):
         plt.title('MouseView'), plt.xticks([]), plt.yticks([])
 
         plt.subplot(333),plt.imshow(fourieReturn[5], cmap = 'gray')
-        plt.title('Input With cont.'), plt.xticks([]), plt.yticks([])
+        plt.title('Input With Contr.'), plt.xticks([]), plt.yticks([])
 
         plt.subplot(339),plt.imshow(fourieReturn[6], cmap = 'gray')
-        plt.title('MouseView cont.'), plt.xticks([]), plt.yticks([])
+        plt.title('MouseView Contr.'), plt.xticks([]), plt.yticks([])
 
 
     if index == 0:
@@ -169,40 +205,51 @@ def give_lowerContrast(img,contrastFactor):
     return img
 
 
-imgPath ='05spat.png'
-imgPath ='passfoto.jpg'
+#imgPath ='05spat.png'
+#imgPath ='passfoto.jpg'
 #imgPath ='Landschaftsbild.jpg'
 
-#Read Image and cut it square
-img = cv2.imread(imgPath,0)
+
+print "Image reading and cropping ..."
+img = cv2.imread(arguments["FILE"],0)
 img = img[0:np.amin(img.shape), 0:np.amin(img.shape)] 
-print "Image is read and croped"
 
 
 
-sinImgList = give_sinImg(np.empty(img.shape),100)
+print "Sine wave creating with cycle number of: ",str(arguments["-c"])," ..."
+sinImgList = give_sinImg(np.empty(img.shape),arguments["-c"])
 sinImg = sinImgList[0]
-print "Sine Wave is created"
 
+
+print "Fourier Transformation ..."
 listOfFourieReturns =[]
 
 fourieReturnAll =fourieMask(sinImg,None)
 listOfFourieReturns.append(fourieReturnAll[0])
 listOfFourieReturns.append(fourieMask(img,fourieReturnAll[1])[0])
-print "Fourie is performed"
 
-listOfFourieReturns[1].append(give_lowerContrast(img,2))
-listOfFourieReturns[1].append(give_lowerContrast(listOfFourieReturns[1][1],2))
+
+print "Contrast Reduction ..."
+test = False
+if test ==True:
+
+    listOfFourieReturns[1].append(img)
+    listOfFourieReturns[1].append(img)
+else:
+    listOfFourieReturns[1].append(give_lowerContrast(img,2))
+    listOfFourieReturns[1].append(give_lowerContrast(listOfFourieReturns[1][1],2))
+
 listOfFourieReturns[0].append(sinImgList[1])
-print "Mouse contrast is performed"
 
+
+print "Image Creation of ",os.path.abspath(str(arguments["-o"]))
 for index,fourieReturn in enumerate(listOfFourieReturns):
     give_plot(fourieReturn,index)
 
- 
-plt.savefig('foo.png', dpi=800,figsize=200)   
-plt.show()
 
+plt.savefig(str(arguments["-o"]), dpi=300,figsize=150)   
+#plt.show()
+print "Finished !!!"
 
 
 
