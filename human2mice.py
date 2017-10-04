@@ -2,7 +2,7 @@
 # Version: 171004
 #Author: Christoph Neu
 
-"""Usage: human2mice.exe (FILE) [-c int] [-o str]
+"""Usage: human2mice.exe (FILE) [-c int] [-k int] [-o str] 
 
 Arguments:
   FILE                      Path to picture 
@@ -10,6 +10,7 @@ Arguments:
 Options:
   -h --help                 Show this 
   -c <int>  cycle count     Number sine cycles per image (Default is 10)
+  -k <inr>  contrast        If active additional images will be created with the choosen contrast reduction
   -o <str>  output name     Name of the output Folder (Default is <input>_analysis)
                             Output is saved in same folder as input image
 """
@@ -36,6 +37,9 @@ if arguments["-o"] == None:
     arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_analysis"
 else:
     arguments["-o"] =  str(arguments["-o"])
+
+if arguments["-k"] != None:
+    arguments["-k"] = int(arguments["-k"])
 os.chdir(os.path.dirname(arguments["FILE"]))
 
 
@@ -128,11 +132,13 @@ def give_plot(fourieReturn, index):
         plt.subplot(337),plt.imshow(fourieReturn[1], cmap = 'gray')
         plt.title('MouseView'), plt.xticks([]), plt.yticks([])
 
-        plt.subplot(333),plt.imshow(fourieReturn[5], cmap = 'gray')
-        plt.title('Input With Contr.'), plt.xticks([]), plt.yticks([])
+        if arguments["-k"] != None:
 
-        plt.subplot(339),plt.imshow(fourieReturn[6], cmap = 'gray')
-        plt.title('MouseView Contr.'), plt.xticks([]), plt.yticks([])
+            plt.subplot(333),plt.imshow(fourieReturn[5], cmap = 'gray')
+            plt.title('Input With Contr.'), plt.xticks([]), plt.yticks([])
+
+            plt.subplot(339),plt.imshow(fourieReturn[6], cmap = 'gray')
+            plt.title('MouseView Contr.'), plt.xticks([]), plt.yticks([])
 
 
     if index == 0:
@@ -283,14 +289,13 @@ listOfFourieReturns.append(fourieMask(img,fourieReturnAll[1])[0])
 
 
 print "Contrast Reduction ..."
-test = False
-if test ==True:
 
-    listOfFourieReturns[1].append(img)
-    listOfFourieReturns[1].append(img)
+if arguments["-k"] ==None:
+    listOfFourieReturns[1].append(img) #Only in here for exe verseion with img save
+    listOfFourieReturns[1].append(img) #Only in here for exe verseion with img save !Needs to be fixed
 else:
-    listOfFourieReturns[1].append(give_lowerContrast(img,2))
-    listOfFourieReturns[1].append(give_lowerContrast(listOfFourieReturns[1][1],2))
+    listOfFourieReturns[1].append(give_lowerContrast(img,arguments["-k"]))
+    listOfFourieReturns[1].append(give_lowerContrast(listOfFourieReturns[1][1],arguments["-k"]))
 
 listOfFourieReturns[0].append(sinImgList[1])
 
@@ -303,7 +308,7 @@ if imgOrPlot == "plot":
         give_plot(fourieReturn,index)
 
 
-    plt.savefig(str(arguments["-o"]), dpi=300,figsize=150)   
+    plt.savefig(str(arguments["-o"])+"_"+str(arguments["-c"])+"c", dpi=300,figsize=150)   
     #plt.show()
 else:
     counter = 0
