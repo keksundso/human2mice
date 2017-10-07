@@ -2,7 +2,7 @@
 # Version: 171004
 #Author: Christoph Neu
 
-"""Usage: human2mice.exe (FILE) [-c int] [-k int] [-o str] 
+"""Usage: human2mice.exe (FILE) [-c int] [-k float] [-o str] 
 
 Arguments:
   FILE                      Path to picture 
@@ -10,23 +10,24 @@ Arguments:
 Options:
   -h --help                 Show this 
   -c <int>  cycle count     Number sine cycles per image (Default is 10)
-  -k <inr>  contrast        If active additional images will be created with the choosen contrast reduction
+  -k <float>  contrast      Images will be created with the choosen contrast reduction (between 1-0)(e.g. 0.5)
   -o <str>  output name     Name of the output Folder (Default is <input>_analysis)
                             Output is saved in same folder as input image
 """
-
+"""
 from docopt import docopt
 
 
 arguments = docopt(__doc__)
+"""
+arguments = {'-c': 10, '-k': 0.5, '-o': None, 'FILE': 'C:\\Users\\keks\\Dropbox\\Uni Jena\\3. semester\\Projektmodul - Bolz\\human2mice\\examples\\test\\05spat.png'}
 
 
 import numpy as np
 import cv2
-#from matplotlib import pyplot as plt
 import os
 import ntpath
-from PIL import Image
+
 
 arguments["FILE"] = os.path.abspath(arguments["FILE"])
 if arguments["-c"] == None:
@@ -34,12 +35,13 @@ if arguments["-c"] == None:
 else:
     arguments["-c"] = int(arguments["-c"])
 if arguments["-o"] == None:
-    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_analysis"
+    print "alsdfk"
+    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_c"+str(arguments["-c"])
 else:
     arguments["-o"] =  str(arguments["-o"])
 
 if arguments["-k"] != None:
-    arguments["-k"] = int(arguments["-k"])
+    arguments["-k"] = float(arguments["-k"])
 os.chdir(os.path.dirname(arguments["FILE"]))
 
 
@@ -199,7 +201,6 @@ def give_img(fourieReturn, index):
         fourieReturn[n] = (255.0 / fourieReturn[n].max() * (fourieReturn[n] - fourieReturn[n].min())).astype(np.uint8)
         im = Image.fromarray(fourieReturn[n]).convert('RGB')        
         im.save('Mask.png')
-        
 
 def deg2rad(x):
     return x * np.pi / 180.
@@ -231,8 +232,8 @@ def give_sinImg(img,nrOfCycles):
 def give_lowerContrast(img,contrastFactor):
     img = np.copy(img)
 
-    mouseMin = int(255/(contrastFactor))-(int(255/(contrastFactor*2)))
-    mouseMax = int(255/(contrastFactor))+(int(255/(contrastFactor*2)))
+    mouseMin = int(255*float(0.5))-(int(255*float(contrastFactor/2.0)))
+    mouseMax = int(255*float(0.5))+(int(255*float(contrastFactor/2.0)))
 
     def remap(value, OldMax,OldMin,NewMax,NewMin):
         OldRange = (OldMax - OldMin)  
@@ -242,25 +243,31 @@ def give_lowerContrast(img,contrastFactor):
         
         return value
 
-    
+    """
     OldMax = img.max()
     OldMin =img.min()
     for lineIndex, line in enumerate(img[:,0]):
         for valueIndex, value in enumerate(img[lineIndex,:]):
             img[lineIndex,valueIndex] = remap(value,OldMax,OldMin,255,0)
     
-
+    
+    
+    
     OldMax = img.max()
     OldMin =img.min()
     for lineIndex, line in enumerate(img[:,0]):
         for valueIndex, value in enumerate(img[lineIndex,:]):
             img[lineIndex,valueIndex] = remap(value,OldMax,OldMin,mouseMax,mouseMin)
-    
-    
+    """
+
+    NewRange = (mouseMax - mouseMin) 
+
+    img = (255.0 / img.max() * (img - img.min())).astype(np.uint8)
+    img = ((float(NewRange) / img.max() * (img - img.min()))+float(mouseMin)).astype(np.uint8)
+
     img[0,0] = 0
     img[0,1] = 255
-    
-    
+   
     return img
 
 
@@ -299,7 +306,7 @@ else:
 
 listOfFourieReturns[0].append(sinImgList[1])
 
-imgOrPlot = "plot"
+imgOrPlot = "plo"
 
 if imgOrPlot == "plot":
     from matplotlib import pyplot as plt
@@ -311,6 +318,7 @@ if imgOrPlot == "plot":
     plt.savefig(str(arguments["-o"])+"_"+str(arguments["-c"])+"c", dpi=300,figsize=150)   
     #plt.show()
 else:
+    from PIL import Image
     counter = 0
     while counter < 100:
         counter+= 1
