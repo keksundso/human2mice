@@ -20,7 +20,7 @@ from docopt import docopt
 
 arguments = docopt(__doc__)
 """
-arguments = {'-c': 10, '-k': 0.5, '-o': None, 'FILE': 'C:\\Users\\keks\\Dropbox\\Uni Jena\\3. semester\\Projektmodul - Bolz\\human2mice\\examples\\test\\05spat.png'}
+#arguments = {'-c': 10, '-k': 0.5, '-o': None, 'FILE': 'C:\\Users\\keks\\Dropbox\\Uni Jena\\3. semester\\Projektmodul - Bolz\\human2mice\\examples\\test\\05spat.png'}
 
 
 import numpy as np
@@ -29,26 +29,77 @@ import os
 import ntpath
 
 
-arguments["FILE"] = os.path.abspath(arguments["FILE"])
-if arguments["-c"] == None:
-    arguments["-c"] = 10
-else:
-    arguments["-c"] = int(arguments["-c"])
-if arguments["-o"] == None:
-    print "alsdfk"
-    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_c"+str(arguments["-c"])
-else:
-    arguments["-o"] =  str(arguments["-o"])
-
-if arguments["-k"] != None:
-    arguments["-k"] = float(arguments["-k"])
-os.chdir(os.path.dirname(arguments["FILE"]))
+#arguments["FILE"] = os.path.abspath(arguments["FILE"])
 
 
+def give_gui():
+    import Tkinter as Tk
+    import tkFileDialog
+
+    def browse_file():
+        global fname
+        fname = tkFileDialog.askopenfilename()
+        print "Selected File is:"
+        print fname
+        runBotton = Tk.Button(master = root, text = 'Run', width = 6, command=run_button)
+        #runBotton.pack(side=Tk.LEFT, padx = 2, pady=2)    
+        runBotton.grid(row=3, column=1)
+
+
+    def run_button():
+        global  var_c 
+        var_c = c.get()
+        global  var_k
+        var_k =   k.get()
+        root.quit()
+
+
+
+    root = Tk.Tk()
+    root.wm_title("mouse2human")
+
+    T_c = Tk.Text(root, height=2, width=40)
+    T_k = Tk.Text(root, height=3, width=40)
+    c = Tk.Entry(root)
+
+    k = Tk.Entry(root)
+
+
+    broButton = Tk.Button(master = root, text = 'Browse', width = 6, command=browse_file)
+    #broButton.pack(side=Tk.LEFT, padx = 2, pady=2)  
+
+    #Anordnung
+    c.grid(row=0, column=1)
+    k.grid(row=1, column=1)
+    broButton.grid(row=3, column=0)
+
+
+    T_c.grid(row=0, column=0)
+    T_c.insert(Tk.END, "Number sine cycles per image\n (Default is 10)")
+
+    T_k.grid(row=1, column=0)
+    T_k.insert(Tk.END, "Images will be created with the \nchoosen contrast reduction \n (Between 1-0) (e.g. 0.5) (Default is 1)")
+
+    Tk.mainloop()
+
+    #check validitaet
+    global var_c
+    global var_k
+    if var_c == "":
+        var_c= 10
+    else:
+        var_c= int(var_c)
+
+    if var_k == "":
+        var_k = 1
+    else:
+        var_k = float(var_k)
+
+
+    return {'-c': var_c, '-k': var_k, '-o': None, 'FILE': fname}
 
 
 def fourieMask(img,windowSize):
-
 
     dft = cv2.dft(np.float32(img),flags = cv2.DFT_COMPLEX_OUTPUT) # macht die fourie transformatio
     dft_shift = np.fft.fftshift(dft) #Shift the zero-frequency component to the center of the spectrum.
@@ -274,6 +325,22 @@ def give_lowerContrast(img,contrastFactor):
 #imgPath ='05spat.png'
 #imgPath ='passfoto.jpg'
 #imgPath ='Landschaftsbild.jpg'
+
+arguments = give_gui()
+
+if arguments["-c"] == None:
+    arguments["-c"] = 10
+else:
+    arguments["-c"] = int(arguments["-c"])
+if arguments["-o"] == None:
+    print "alsdfk"
+    arguments["-o"] = str(ntpath.basename(arguments["FILE"])).split(".")[0]+"_c"+str(arguments["-c"])
+else:
+    arguments["-o"] =  str(arguments["-o"])
+
+if arguments["-k"] != None:
+    arguments["-k"] = float(arguments["-k"])
+os.chdir(os.path.dirname(arguments["FILE"]))
 
 
 print "Image reading and cropping ..."
