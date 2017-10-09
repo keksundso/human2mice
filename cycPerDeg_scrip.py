@@ -1,8 +1,10 @@
 import math
 import numpy as np
-d = 100
-s = 30
-c = 0.8
+
+
+d = 100   	#distance to screen
+s = 30		#size of screen
+c = 0.8	# cycle per image
 
 def rad2deg(x):
     return x *   180. /np.pi
