@@ -3,6 +3,7 @@ from PIL import ImageFilter
 import pickle
 import os
 
+#viscodeDockerTest
 ################## Parameters
 
 #ImagePath= '60spat.bmp'
